@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/guilhermeonrails/api-go-gin/database"
-	"github.com/guilhermeonrails/api-go-gin/models"
+	"github.com/mariojuniortrab/api-rest-gin-go/database"
+	"github.com/mariojuniortrab/api-rest-gin-go/models"
 )
 
 func ListAllStudents(c *gin.Context) {
@@ -28,6 +28,13 @@ func RegisterStudent(c *gin.Context) {
 			"error": err.Error()})
 		return
 	}
+
+	if err := models.ValidateStudentData(&student); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error()})
+		return
+	}
+
 	database.DB.Create(&student)
 	c.JSON(http.StatusOK, student)
 }
@@ -64,6 +71,12 @@ func UpdateStudent(c *gin.Context) {
 		return
 	}
 
+	if err := models.ValidateStudentData(&student); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error()})
+		return
+	}
+
 	database.DB.Model(&student).UpdateColumns(student)
 	c.JSON(http.StatusOK, student)
 }
@@ -80,4 +93,16 @@ func DetailStudentByCPF(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, student)
+}
+
+func ShowIndexPage(c *gin.Context) {
+	var students []models.Student
+	database.DB.Find(&students)
+	c.HTML(http.StatusOK, "index.html", gin.H{
+		"students": students,
+	})
+}
+
+func ShowPageNotFound(c *gin.Context) {
+	c.HTML(http.StatusNotFound, "404.html", nil)
 }
